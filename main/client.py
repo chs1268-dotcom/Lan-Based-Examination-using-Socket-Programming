@@ -2,6 +2,7 @@ import time, socket, sys
 
 def client_program():
 	host = socket.gethostname()  # as both code is running on same pc
+	#host = '127.0.0.1'
 	port = 8008  # socket server port number
 
 	client_socket = socket.socket()  # instantiate
