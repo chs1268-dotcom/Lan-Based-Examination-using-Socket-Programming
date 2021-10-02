@@ -1,5 +1,7 @@
 import time, socket, sys
 import csv
+from _thread import *
+
 
 filename = "CSV_Files/questionaire.csv"
 QQ = []
@@ -12,19 +14,8 @@ with open(filename, 'r') as csvfile:
             mydict[fields[i]] = row[i]
         QQ.append(mydict)
 
-def server_program():
-	# get the hostname
-	host = socket.gethostname()
-	port = 8008  # initiate port no above 1024
-	
-	server_socket = socket.socket()  # get instance
-	# look closely. The bind() function takes tuple as argument
-	server_socket.bind((host, port))  # bind host address and port together
-	
-	# configure how many client the server can listen simultaneously
-	server_socket.listen(2)
-	conn, address = server_socket.accept()  # accept new connection
-	print("Connection from: " + str(address))
+
+def threaded_client(conn):
 	while True:
 		for i in range(len(QQ)):
 			time.sleep(0.1)
@@ -46,11 +37,26 @@ def server_program():
 			else:
 				result = 'Wrong Answer'
 				conn.send(result.encode())
-				
-			print("Answer from student: " + str(ans))
-		
-		conn.close()# close the connection
-		break
+		break		
+	conn.close()# close the connection
+
+def server_program():
+	# get the hostname
+	host = socket.gethostname()
+	#host = '127.0.0.1'
+	port = 8008  # initiate port no above 1024
+	
+	server_socket = socket.socket()  # get instance
+	# look closely. The bind() function takes tuple as argument
+	server_socket.bind((host, port))  # bind host address and port together
+	
+	# configure how many client the server can listen simultaneously
+	server_socket.listen(60)
+	while True:
+		conn, address = server_socket.accept()  # accept new connection
+		print("Connection from: " + str(address))
+		start_new_thread(threaded_client, (conn, ))
+
 
 if __name__ == '__main__':
 	server_program()
