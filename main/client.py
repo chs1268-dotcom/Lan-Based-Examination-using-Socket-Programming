@@ -10,6 +10,19 @@ def client_program():
 
 	ANS_DICT = {'A' : 'Option1', 'B' : 'Option2', 'C' : 'Option3', 'D' : 'Option4'}
 
+	request1 = client_socket.recv(1024).decode()
+	reply1 = input(request1)
+	client_socket.send(reply1.encode())
+	request2 = client_socket.recv(1024).decode()
+	reply2 = input(request2)
+	client_socket.send(reply2.encode())
+
+	permission = client_socket.recv(1024).decode()
+	if permission == "NOT ALLOWED":
+		print("Invalid ID/Password")
+		client_socket.close()
+		return
+
 	for i in range(5):
 		Question = client_socket.recv(1024).decode()
 		print('Question ' + str(i+1) + ' :- ' + Question)
