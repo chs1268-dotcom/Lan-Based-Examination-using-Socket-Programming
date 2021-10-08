@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import *
 import time, socket, sys
 import csv, os
 from _thread import *
@@ -19,6 +20,41 @@ class Event(LoggingEventHandler):
     def on_modified(self, event):
         push_in_Q(QUEUE_LENGTH)
 
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title('Test Window')
+        width= self.winfo_screenwidth()               
+        height= self.winfo_screenheight()               
+        self.geometry("%dx%d" % (width, height))
+    
+    def header_setup(self):
+        filename3 = "CSV_Files/progress.csv"
+        with open(filename3, 'r') as csvfile:
+            csvreader = csv.reader(csvfile)
+            self.RR_fields = next(csvreader)
+    
+    def table(self):
+        update_csv()
+        total_rows = len(RR)
+        total_columns = len(self.RR_fields)
+        for j in range(total_columns):
+            if j:
+                self.e = Entry(self, width=10, fg='blue',font=('Arial',16,'bold'))
+            else:
+                self.e = Entry(self, width=20, fg='blue',font=('Arial',16,'bold'))
+            self.e.grid(row=0, column=j)
+            self.e.insert(END, self.RR_fields[j])
+        for i in range(total_rows):
+            for j in range(total_columns):
+                if j:
+                    self.e = Entry(self, width=10, fg='blue',font=('Arial',16,'bold'))
+                else:
+                    self.e = Entry(self, width=20, fg='blue',font=('Arial',16,'bold'))
+                self.e.grid(row=i + 1, column=j)
+                self.e.insert(END,  RR[i][self.RR_fields[j]])
+
+
 def setting_up_window(window):
     #window.attributes('-fullscreen', True)
     window.title("Server Side")
@@ -32,7 +68,6 @@ def setting_up_window(window):
 def setting_up_csv():
     filename1 = "CSV_Files/questionaire.csv"
     filename2 = "CSV_Files/id_passwords.csv"
-
     csvreader1 = csv.DictReader(open(filename1))
     for row in csvreader1:
         QQ.append(row)
@@ -40,7 +75,7 @@ def setting_up_csv():
     with open(filename2, 'r') as csvfile:
         csvreader2 = csv.reader(csvfile)
         for row in csvreader2:
-            PP[row[0]] = row[1]
+            PP[row[0]] = row[1]    
     push_in_Q(QUEUE_LENGTH)
 
 
@@ -140,23 +175,20 @@ def start_server(server_socket):
 
 
 def display(window):
-        label = tk.Label(window, text=q.get()[0])
-        label.pack()
+        window.label.text = q.get()[0]
 
 def chec(window):
     if QUEUE_LENGTH != q.qsize():
         display(window)
 
-def t0():
-    window = tk.Tk()
-    setting_up_window(window)
-    display(window)
-    B = tk.Button(window, text ="Refresh", command=lambda: chec(window))
-    B.pack()
-    window.mainloop()
-
-
 def t1():
+    app = App()
+    app.header_setup()
+    app.table()
+    app.mainloop()
+
+
+def t0():
     setting_up_csv()
     server_socket = setting_up_server()
     start_server(server_socket)
