@@ -8,25 +8,22 @@ from queue import Queue
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 
-# All data will go here
-QQ = []
-PP = dict()
-RR = []
-
-q = Queue()
-QUEUE_LENGTH = 0
-
 class Event(LoggingEventHandler):
     def on_modified(self, event):
-        push_in_Q(QUEUE_LENGTH)
+        app.table()
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title('Test Window')
+        self.title('Server Side')
         width= self.winfo_screenwidth()               
         height= self.winfo_screenheight()               
         self.geometry("%dx%d" % (width, height))
+        
+        b = Button(self, text='Refresh', command=self.table)
+        b.grid(row = 0, column = 8)
+
+        self.protocol("WM_DELETE_WINDOW", self.close_window)
     
     def header_setup(self):
         filename3 = "CSV_Files/progress.csv"
@@ -35,39 +32,29 @@ class App(tk.Tk):
             self.RR_fields = next(csvreader)
     
     def table(self):
-        update_csv()
-        total_rows = len(RR)
-        total_columns = len(self.RR_fields)
-        for j in range(total_columns):
-            if j:
-                self.e = Entry(self, width=10, fg='blue',font=('Arial',16,'bold'))
-            else:
-                self.e = Entry(self, width=20, fg='blue',font=('Arial',16,'bold'))
-            self.e.grid(row=0, column=j)
-            self.e.insert(END, self.RR_fields[j])
-        for i in range(total_rows):
-            for j in range(total_columns):
-                if j:
-                    self.e = Entry(self, width=10, fg='blue',font=('Arial',16,'bold'))
-                else:
-                    self.e = Entry(self, width=20, fg='blue',font=('Arial',16,'bold'))
-                self.e.grid(row=i + 1, column=j)
-                self.e.insert(END,  RR[i][self.RR_fields[j]])
-
-
-def setting_up_window(window):
-    #window.attributes('-fullscreen', True)
-    window.title("Server Side")
-
-    screen_width = window.winfo_screenwidth()
-    screen_height = window.winfo_screenheight()
-    window.geometry(f"{screen_width//2}x{screen_height//2}")
-    #window.resizable(False, False)
+        cnt = 1
+        frame1 = tk.LabelFrame(self, text="Student Data")
+        frame1.place(height=320, width=1000)
+        RR_fields = ['started','finished','Q1','Q2','Q3','Q4','Q5']
+        for i in RR:
+            label = tk.Label(self, width = 15, height = 2, text = i, relief = tk.RIDGE)
+            label.grid(row = cnt, column = 0)
+            tnc = 1
+            for j in RR_fields:
+                label = tk.Label(self, width = 15, height = 2, text = RR[i][j], relief = tk.RIDGE)
+                label.grid(row = cnt, column = tnc)
+                tnc+=1
+            cnt+=1
+    
+    def close_window(self):
+        q.put(_sentinel)
+        self.destroy()
 
 
 def setting_up_csv():
     filename1 = "CSV_Files/questionaire.csv"
     filename2 = "CSV_Files/id_passwords.csv"
+    filename3 = "CSV_Files/progress.csv"
     csvreader1 = csv.DictReader(open(filename1))
     for row in csvreader1:
         QQ.append(row)
@@ -75,17 +62,10 @@ def setting_up_csv():
     with open(filename2, 'r') as csvfile:
         csvreader2 = csv.reader(csvfile)
         for row in csvreader2:
-            PP[row[0]] = row[1]    
-    push_in_Q(QUEUE_LENGTH)
-
-
-def push_in_Q(QUEUE_LENGTH):
-    filename3 = "CSV_Files/progress.csv"
+            PP[row[0]] = row[1]
     csvreader3 = csv.DictReader(open(filename3))
     for row in csvreader3:
-        RR.append(row)
-    q.put(RR)
-    QUEUE_LENGTH+=1
+        RR[row['id']] = {'started' : row['started'], 'finished' : row['finished'], 'Q1' : row['Q1'], 'Q2' : row['Q2'], 'Q3' : row['Q3'], 'Q4' : row['Q4'], 'Q5' : row['Q5']}
 
 
 def update_csv():
@@ -96,7 +76,10 @@ def update_csv():
     with open(filename3, 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames = RR_fields)
         writer.writeheader()
-        writer.writerows(RR)
+        tmpdic = []
+        for i in RR:
+            tmpdic.append({'id' : i, 'started' : RR[i]['started'], 'finished' : RR[i]['finished'], 'Q1' : RR[i]['Q1'], 'Q2' : RR[i]['Q2'], 'Q3' : RR[i]['Q3'], 'Q4' : RR[i]['Q4'], 'Q5' : RR[i]['Q5']})
+        writer.writerows(tmpdic)
     
 
 def threaded_client(conn):
@@ -112,7 +95,7 @@ def threaded_client(conn):
 				time.sleep(0.1)
 				conn.send(QQ[i]['Option3'].encode())
 				time.sleep(0.1)
-				conn.send(QQ[i]['Option4'].encode())		
+				conn.send(QQ[i]['Option4'].encode())
 		
 				ans = conn.recv(1024).decode()
 				# receive data stream. it won't accept data packet greater than 1024 bytes
@@ -122,7 +105,7 @@ def threaded_client(conn):
 				else:
 					result = 'Wrong Answer'
 					conn.send(result.encode())
-			break		
+			break
 		conn.close()# close the connection
 	except:
 		return
@@ -141,7 +124,7 @@ def setting_up_server():
     return server_socket
 
 
-def start_server(server_socket):
+def start_server(server_socket, q):
 	# configure how many client the server can listen simultaneously
     server_socket.listen(60)
     while True:
@@ -154,47 +137,36 @@ def start_server(server_socket):
         conn.send(s2.encode())
         passw = conn.recv(1024).decode()
 
+        if q.get() is _sentinel:
+            q.put(_sentinel)
+            conn.close()
+
         if (reg_no in PP and PP[reg_no] == passw):
-            for i in RR:
-                if i['id'] == reg_no and i['started'] == 'true':
-                    print('Already Started')
-                    break
-                elif i['id'] == reg_no and i['started'] == 'false':
-                    i['started'] = 'true'
-                    update_csv()
-                    break
-            allowed = "ALLOWED"
-            conn.send(allowed.encode())
-            
-            print(f'Registration Number - {reg_no} has started the test.')
+            if RR[reg_no]['started'] == 'true':
+                print('Already Started')
+                not_allowed = "NOT ALLOWED"
+                conn.send(not_allowed.encode())
+            else:
+                RR[reg_no]['started'] = 'true'
+                #q.put((reg_no, 'started'))
+                update_csv()
+                allowed = "ALLOWED"
+                conn.send(allowed.encode())
+                print(f'Registration Number - {reg_no} has started the test.')
         else:
             not_allowed = "NOT ALLOWED"
             conn.send(not_allowed.encode())
 
-        start_new_thread(threaded_client, (conn, ))
+        start_new_thread(threaded_client, (conn, reg_no))
 
 
-def display(window):
-        window.label.text = q.get()[0]
-
-def chec(window):
-    if QUEUE_LENGTH != q.qsize():
-        display(window)
-
-def t1():
-    app = App()
-    app.header_setup()
-    app.table()
-    app.mainloop()
-
-
-def t0():
+def t0(q):
     setting_up_csv()
     server_socket = setting_up_server()
-    start_server(server_socket)
+    start_server(server_socket, q)
 
 
-def t3():
+def t1(q):
     path = 'CSV_Files/progress.csv'
     # Initialize logging event handler
     event_handler = Event()
@@ -207,17 +179,30 @@ def t3():
         while True:
             # Set the thread sleep time
             time.sleep(2)
+            if q.get() is _sentinel:
+                exit()
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
 
 
 if __name__ == '__main__':
-    thread_0 = threading.Thread(target=t0)
-    thread_1 = threading.Thread(target=t1)
-    thread_3 = threading.Thread(target=t3)
+    # All data will go here
+    QQ = []
+    PP = dict()
+    RR = {}
+
+    _sentinel = object()
+
+    q = Queue()
+    QUEUE_LENGTH = 0
+    thread_0 = threading.Thread(target=t0, args=(q,))
+    thread_1 = threading.Thread(target=t1, args=(q,))
     thread_0.start()
     thread_1.start()
-    thread_3.start()
+    app = App()
+    app.header_setup()
+    app.table()
+    app.mainloop()
     # thread_0.join()
     # thread_1.join()
