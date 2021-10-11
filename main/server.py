@@ -8,11 +8,20 @@ from queue import Queue
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 
-class Event(LoggingEventHandler):
-    def on_modified(self, event):
-        app.table()
 
+# event handler for watchdog which will notify whenever change in directory is noticed 
+class Event(LoggingEventHandler):
+    count = 0
+    def on_modified(self, event):
+        self.count += 1
+        if (self.count == 2):
+            app.table()
+            self.count = 0
+
+
+# Tkinter App implementation OO
 class App(tk.Tk):
+    # Initialization of window
     def __init__(self):
         super().__init__()
         self.title('Server Side')
@@ -20,22 +29,26 @@ class App(tk.Tk):
         height= self.winfo_screenheight()               
         self.geometry("%dx%d" % (width, height))
         
+        # temporary refresh button
         b = Button(self, text='Refresh', command=self.table)
-        b.grid(row = 0, column = 8)
+        b.grid(row = 0, column = 9)
 
+        #protocol whnever close button in pressed
         self.protocol("WM_DELETE_WINDOW", self.close_window)
     
+    # heading setup for each column
     def header_setup(self):
         filename3 = "CSV_Files/progress.csv"
         with open(filename3, 'r') as csvfile:
             csvreader = csv.reader(csvfile)
             self.RR_fields = next(csvreader)
     
+    # whole table setup
     def table(self):
         cnt = 1
         frame1 = tk.LabelFrame(self, text="Student Data")
-        frame1.place(height=320, width=1000)
-        RR_fields = ['started','finished','Q1','Q2','Q3','Q4','Q5']
+        frame1.place(height=320, width=1150)
+        RR_fields = ['started','finished','Q1','Q2','Q3','Q4','Q5','score']
         for i in RR:
             label = tk.Label(self, width = 15, height = 2, text = i, relief = tk.RIDGE)
             label.grid(row = cnt, column = 0)
@@ -46,11 +59,12 @@ class App(tk.Tk):
                 tnc+=1
             cnt+=1
     
+    # closing window action
     def close_window(self):
-        q.put(_sentinel)
         self.destroy()
 
 
+# CSV initialization
 def setting_up_csv():
     filename1 = "CSV_Files/questionaire.csv"
     filename2 = "CSV_Files/id_passwords.csv"
@@ -65,9 +79,10 @@ def setting_up_csv():
             PP[row[0]] = row[1]
     csvreader3 = csv.DictReader(open(filename3))
     for row in csvreader3:
-        RR[row['id']] = {'started' : row['started'], 'finished' : row['finished'], 'Q1' : row['Q1'], 'Q2' : row['Q2'], 'Q3' : row['Q3'], 'Q4' : row['Q4'], 'Q5' : row['Q5']}
+        RR[row['id']] = {'started' : row['started'], 'finished' : row['finished'], 'Q1' : row['Q1'], 'Q2' : row['Q2'], 'Q3' : row['Q3'], 'Q4' : row['Q4'], 'Q5' : row['Q5'], 'score' : row['score']}
 
 
+# update CSV whenever a change is applied on server side from client
 def update_csv():
     filename3 = "CSV_Files/progress.csv"
     with open(filename3, 'r') as csvfile:
@@ -78,39 +93,44 @@ def update_csv():
         writer.writeheader()
         tmpdic = []
         for i in RR:
-            tmpdic.append({'id' : i, 'started' : RR[i]['started'], 'finished' : RR[i]['finished'], 'Q1' : RR[i]['Q1'], 'Q2' : RR[i]['Q2'], 'Q3' : RR[i]['Q3'], 'Q4' : RR[i]['Q4'], 'Q5' : RR[i]['Q5']})
+            tmpdic.append({'id' : i, 'started' : RR[i]['started'], 'finished' : RR[i]['finished'], 'Q1' : RR[i]['Q1'], 'Q2' : RR[i]['Q2'], 'Q3' : RR[i]['Q3'], 'Q4' : RR[i]['Q4'], 'Q5' : RR[i]['Q5'], 'score' : RR[i]['score']})
         writer.writerows(tmpdic)
     
 
-def threaded_client(conn):
-	try:
-		while True:
-			for i in range(len(QQ)):
-				time.sleep(0.1)
-				conn.send(QQ[i]['Question'].encode())
-				time.sleep(0.1)
-				conn.send(QQ[i]['Option1'].encode())
-				time.sleep(0.1)
-				conn.send(QQ[i]['Option2'].encode())
-				time.sleep(0.1)
-				conn.send(QQ[i]['Option3'].encode())
-				time.sleep(0.1)
-				conn.send(QQ[i]['Option4'].encode())
-		
-				ans = conn.recv(1024).decode()
-				# receive data stream. it won't accept data packet greater than 1024 bytes
-				if QQ[i][ans] ==QQ[i]['Answer']:
-					result = 'Right answer'
-					conn.send(result.encode())
-				else:
-					result = 'Wrong Answer'
-					conn.send(result.encode())
-			break
-		conn.close()# close the connection
-	except:
-		return
+# questionaire dispenser for seperate threads for different clients
+def threaded_client(conn, reg_no):
+    try:
+        for i in range(len(QQ)):
+            time.sleep(0.1)
+            conn.send(QQ[i]['Question'].encode())
+            time.sleep(0.1)
+            conn.send(QQ[i]['Option1'].encode())
+            time.sleep(0.1)
+            conn.send(QQ[i]['Option2'].encode())
+            time.sleep(0.1)
+            conn.send(QQ[i]['Option3'].encode())
+            time.sleep(0.1)
+            conn.send(QQ[i]['Option4'].encode())
+
+            ans = conn.recv(1024).decode()
+            dic = {1 : 'Q1', 2 : 'Q2', 3 : 'Q3', 4 : 'Q4', 5 : 'Q5'}
+            RR[reg_no][dic[i + 1]] = 'true'
+            # receive data stream. it won't accept data packet greater than 1024 bytes
+            if QQ[i][ans] ==QQ[i]['Answer']:
+                result = 'Right answer'
+                conn.send(result.encode())
+                RR[reg_no]['score'] = str(int(RR[reg_no]['score']) + 1)
+            else:
+                result = 'Wrong Answer'
+                conn.send(result.encode())
+            update_csv()
+        RR[reg_no]['finished'] == 'true'    
+        conn.close()# close the connection
+    except:
+        return
 
 
+# server setup
 def setting_up_server():
     # get the hostname
     host = socket.gethostname()
@@ -124,7 +144,7 @@ def setting_up_server():
     return server_socket
 
 
-def start_server(server_socket, q):
+def start_server(server_socket):
 	# configure how many client the server can listen simultaneously
     server_socket.listen(60)
     while True:
@@ -136,10 +156,6 @@ def start_server(server_socket, q):
         s2 = "Enter Your Password :- "
         conn.send(s2.encode())
         passw = conn.recv(1024).decode()
-
-        if q.get() is _sentinel:
-            q.put(_sentinel)
-            conn.close()
 
         if (reg_no in PP and PP[reg_no] == passw):
             if RR[reg_no]['started'] == 'true':
@@ -163,7 +179,7 @@ def start_server(server_socket, q):
 def t0(q):
     setting_up_csv()
     server_socket = setting_up_server()
-    start_server(server_socket, q)
+    start_server(server_socket)
 
 
 def t1(q):
@@ -179,8 +195,6 @@ def t1(q):
         while True:
             # Set the thread sleep time
             time.sleep(2)
-            if q.get() is _sentinel:
-                exit()
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
@@ -196,10 +210,13 @@ if __name__ == '__main__':
 
     q = Queue()
     QUEUE_LENGTH = 0
+    # threads announcement
     thread_0 = threading.Thread(target=t0, args=(q,))
     thread_1 = threading.Thread(target=t1, args=(q,))
+    # starting of thread
     thread_0.start()
     thread_1.start()
+    # starting tkinter app
     app = App()
     app.header_setup()
     app.table()
