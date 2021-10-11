@@ -1,8 +1,8 @@
-id,started,finished,Q1,Q2,Q3,Q4,Q5
-RA1911003010723,false,false,false,false,false,false,false
-RA1911003010724,false,false,false,false,false,false,false
-RA1911003010725,false,false,false,false,false,false,false
-RA1911003010726,false,false,false,false,false,false,false
-RA1911003010727,false,false,false,false,false,false,false
-RA1911003010728,false,false,false,false,false,false,false
-RA1911003010729,false,false,false,false,false,false,false
+id,started,finished,Q1,Q2,Q3,Q4,Q5,score
+RA1911003010723,false,false,false,false,false,false,false,0
+RA1911003010724,false,false,false,false,false,false,false,0
+RA1911003010725,false,false,false,false,false,false,false,0
+RA1911003010726,false,false,false,false,false,false,false,0
+RA1911003010727,false,false,false,false,false,false,false,0
+RA1911003010728,false,false,false,false,false,false,false,0
+RA1911003010729,false,false,false,false,false,false,false,0

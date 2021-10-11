@@ -7,6 +7,8 @@ import threading
 from queue import Queue
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
+from tkinter import Frame, Pack, filedialog,messagebox,ttk
+
 
 
 # event handler for watchdog which will notify whenever change in directory is noticed 
@@ -25,16 +27,21 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('Server Side')
-        width= self.winfo_screenwidth()               
-        height= self.winfo_screenheight()               
-        self.geometry("%dx%d" % (width, height))
+        self.geometry("1300x600")
+        self.pack_propagate(False)
+        self.resizable(0, 0)
         
         # temporary refresh button
-        b = Button(self, text='Refresh', command=self.table)
-        b.grid(row = 0, column = 9)
+        # b = Button(self, text='Refresh', command=self.table)
+        # b.grid(row = 0, column = 9)
 
         #protocol whnever close button in pressed
         self.protocol("WM_DELETE_WINDOW", self.close_window)
+    
+    def main_window(self):
+        label = Label(self, text="Welcome!! Host Your Own Exam :)", font=('Helvetica bold', 24))
+        label.pack()
+        self.table()
     
     # heading setup for each column
     def header_setup(self):
@@ -45,20 +52,43 @@ class App(tk.Tk):
     
     # whole table setup
     def table(self):
-        cnt = 1
+        #frame for tree view
         frame1 = tk.LabelFrame(self, text="Student Data")
-        frame1.place(height=320, width=1150)
-        RR_fields = ['started','finished','Q1','Q2','Q3','Q4','Q5','score']
-        for i in RR:
-            label = tk.Label(self, width = 15, height = 2, text = i, relief = tk.RIDGE)
-            label.grid(row = cnt, column = 0)
-            tnc = 1
-            for j in RR_fields:
-                label = tk.Label(self, width = 15, height = 2, text = RR[i][j], relief = tk.RIDGE)
-                label.grid(row = cnt, column = tnc)
-                tnc+=1
-            cnt+=1
+        frame1.place(height=400, width=1250,rely=0.1,relx=0.02)
+        #tree view
+        tv1 = ttk.Treeview(frame1)
+        tv1.place(relheight=1,relwidth=1)
+
+        treescrolly = tk.Scrollbar(frame1,orient="vertical",command=tv1.yview)
+
+        tv1.configure(yscrollcommand=treescrolly.set)
+        treescrolly.pack(side="right",fill="y")
+
+        tree = ttk.Treeview(frame1, column=("c1", "c2", "c3", "c4", "c5"), show='headings', height=60)
+        headings = ['Registration ID', 'Exam Started','Exam Finished','Questions Status','Total Score']
+        for i in range(len(headings)):
+            tree.column(f"# {i + 1}", anchor=CENTER)
+            tree.heading(f"# {i + 1}", text=headings[i])
+            
+            RR_fields = ['started','finished','Q1','Q2','Q3','Q4','Q5','score']
+            cnt = 1
+            for i in RR:
+                tree.insert('', 'end', text=cnt, values=(i, RR[i]['started'], RR[i]['finished'], "NA", RR[i]['score']))
+                cnt += 1
+        tree.pack()
     
+    def control_panel(self):
+        #frame for update button
+        file_frame = tk.LabelFrame(self, text="Control Panel")
+        file_frame.place(height=100, width=1250,rely=0.8,relx=0.02)
+        #buttons
+        button1 = tk.Button(file_frame,text="Manual Update", command=self.table)
+        button1.place(rely=0.4, relx=0.3)
+        button1 = tk.Button(file_frame,text="Start Server")
+        button1.place(rely=0.4, relx=0.45)
+        button1 = tk.Button(file_frame,text="Close Server")
+        button1.place(rely=0.4, relx=0.6)
+
     # closing window action
     def close_window(self):
         self.destroy()
@@ -219,7 +249,8 @@ if __name__ == '__main__':
     # starting tkinter app
     app = App()
     app.header_setup()
-    app.table()
+    app.main_window()
+    app.control_panel()
     app.mainloop()
     # thread_0.join()
     # thread_1.join()
