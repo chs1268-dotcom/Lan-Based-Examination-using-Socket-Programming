@@ -27,7 +27,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('Server Side')
-        self.geometry("1300x600")
+        self.geometry("1100x590")
         self.pack_propagate(False)
         self.resizable(0, 0)
         
@@ -39,7 +39,7 @@ class App(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.close_window)
     
     def main_window(self):
-        label = Label(self, text="Welcome!! Host Your Own Exam :)", font=('Helvetica bold', 24))
+        label = Label(self, text="Welcome!! Host Your Own Exam :)", font=('Helvetica bold', 16))
         label.pack()
         self.table()
     
@@ -54,40 +54,37 @@ class App(tk.Tk):
     def table(self):
         #frame for tree view
         frame1 = tk.LabelFrame(self, text="Student Data")
-        frame1.place(height=400, width=1250,rely=0.1,relx=0.02)
+        frame1.place(height=390, width=1050,rely=0.1,relx=0.02)
+        
+        treescrolly = tk.Scrollbar(frame1, orient="vertical")
+        treescrolly.pack(side="right", fill="y")
         #tree view
-        tv1 = ttk.Treeview(frame1)
-        tv1.place(relheight=1,relwidth=1)
+        tree = ttk.Treeview(frame1, column=("c1", "c2", "c3", "c4", "c5"), show='headings', height=17, yscrollcommand = treescrolly.set)
+        treescrolly.config(command = tree.yview)
 
-        treescrolly = tk.Scrollbar(frame1,orient="vertical",command=tv1.yview)
-
-        tv1.configure(yscrollcommand=treescrolly.set)
-        treescrolly.pack(side="right",fill="y")
-
-        tree = ttk.Treeview(frame1, column=("c1", "c2", "c3", "c4", "c5"), show='headings', height=60)
         headings = ['Registration ID', 'Exam Started','Exam Finished','Questions Status','Total Score']
         for i in range(len(headings)):
             tree.column(f"# {i + 1}", anchor=CENTER)
             tree.heading(f"# {i + 1}", text=headings[i])
             
-            RR_fields = ['started','finished','Q1','Q2','Q3','Q4','Q5','score']
-            cnt = 1
-            for i in RR:
-                tree.insert('', 'end', text=cnt, values=(i, RR[i]['started'], RR[i]['finished'], "NA", RR[i]['score']))
-                cnt += 1
+        RR_fields = ['started','finished','Q1','Q2','Q3','Q4','Q5','score']
+        cnt = 1
+        for i in RR:
+            tree.insert('', 'end', text=cnt, values=(i, RR[i]['started'], RR[i]['finished'], "Click Me !!", RR[i]['score']))
+            cnt += 1
         tree.pack()
     
     def control_panel(self):
         #frame for update button
         file_frame = tk.LabelFrame(self, text="Control Panel")
-        file_frame.place(height=100, width=1250,rely=0.8,relx=0.02)
+        file_frame.place(height=100, width=1050,rely=0.78,relx=0.02)
         #buttons
         button1 = tk.Button(file_frame,text="Manual Update", command=self.table)
         button1.place(rely=0.4, relx=0.3)
         button1 = tk.Button(file_frame,text="Start Server")
         button1.place(rely=0.4, relx=0.45)
         button1 = tk.Button(file_frame,text="Close Server")
-        button1.place(rely=0.4, relx=0.6)
+        button1.place(rely=0.4, relx=0.58)
 
     # closing window action
     def close_window(self):
