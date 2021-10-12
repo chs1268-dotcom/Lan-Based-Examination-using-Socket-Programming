@@ -27,7 +27,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('Server Side')
-        self.geometry("1100x590")
+        self.geometry("1100x600")
         self.pack_propagate(False)
         self.resizable(0, 0)
         
@@ -39,8 +39,14 @@ class App(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.close_window)
     
     def main_window(self):
-        label = Label(self, text="Welcome!! Host Your Own Exam :)", font=('Helvetica bold', 16))
-        label.pack()
+        label1 = Label(self, text="Welcome!! Host Your Own Exam :)", font=('Helvetica bold', 14))
+        label1.pack()
+        
+        frame0 = tk.LabelFrame(self, text="Tip")
+        frame0.place(height=50, width=1050,rely=0.04,relx=0.02)
+        label2 = Label(frame0, text="Double Click On A Selected Row To View Student's Credentials, Student's Response To Questions In Provided Questionaire.", font=('Helvetica bold', 10))
+        label2.pack()
+
         self.table()
     
     # heading setup for each column
@@ -54,15 +60,17 @@ class App(tk.Tk):
     def table(self):
         #frame for tree view
         frame1 = tk.LabelFrame(self, text="Student Data")
-        frame1.place(height=390, width=1050,rely=0.1,relx=0.02)
+        frame1.place(height=390, width=1050,rely=0.13,relx=0.02)
         
         treescrolly = tk.Scrollbar(frame1, orient="vertical")
         treescrolly.pack(side="right", fill="y")
         #tree view
-        tree = ttk.Treeview(frame1, column=("c1", "c2", "c3", "c4", "c5"), show='headings', height=17, yscrollcommand = treescrolly.set)
+        tree = ttk.Treeview(frame1, column=("c1", "c2", "c3", "c4"), show='headings', height=17, yscrollcommand = treescrolly.set)
         treescrolly.config(command = tree.yview)
 
-        headings = ['Registration ID', 'Exam Started','Exam Finished','Questions Status','Total Score']
+        self.tree = tree
+
+        headings = ['Registration ID', 'Exam Started','Exam Finished','Total Score']
         for i in range(len(headings)):
             tree.column(f"# {i + 1}", anchor=CENTER)
             tree.heading(f"# {i + 1}", text=headings[i])
@@ -70,14 +78,17 @@ class App(tk.Tk):
         RR_fields = ['started','finished','Q1','Q2','Q3','Q4','Q5','score']
         cnt = 1
         for i in RR:
-            tree.insert('', 'end', text=cnt, values=(i, RR[i]['started'], RR[i]['finished'], "Click Me !!", RR[i]['score']))
+            tree.insert('', 'end', text=cnt, values=(i, RR[i]['started'], RR[i]['finished'], RR[i]['score']))
             cnt += 1
+            tree.bind('<Double-1>', self.selectItem)
+        #tree.selection_set(0)
         tree.pack()
+
     
     def control_panel(self):
         #frame for update button
         file_frame = tk.LabelFrame(self, text="Control Panel")
-        file_frame.place(height=100, width=1050,rely=0.78,relx=0.02)
+        file_frame.place(height=100, width=1050,rely=0.79,relx=0.02)
         #buttons
         button1 = tk.Button(file_frame,text="Manual Update", command=self.table)
         button1.place(rely=0.4, relx=0.3)
@@ -85,6 +96,39 @@ class App(tk.Tk):
         button1.place(rely=0.4, relx=0.45)
         button1 = tk.Button(file_frame,text="Close Server")
         button1.place(rely=0.4, relx=0.58)
+
+    def show_details(self):
+        top= Toplevel(self)
+        top.geometry("750x300")
+        top.title("Student Credentials Window")
+        Label(top, text= self.curItem['values'][0], font=('Helvetica bold', 16)).pack()
+
+
+    def show_response(self):
+        top= Toplevel(self)
+        top.geometry("750x300")
+        top.title("Student Response Window")
+        Label(top, text= self.curItem['values'][0], font=('Helvetica bold', 16)).pack()
+
+
+    def show_questions(self):
+        top= Toplevel(self)
+        top.geometry("750x300")
+        top.title("Questionaire Window")
+        Label(top, text= self.curItem['values'][0], font=('Helvetica bold', 16)).pack()
+
+
+    def selectItem(self, event):
+        self.curItem = self.tree.item(self.tree.focus())
+        self.col = self.tree.identify_column(event.x)
+        m = Menu(self, tearoff = 0)
+        m.add_command(label ="View Student Credentials", command = self.show_details)
+        m.add_command(label ="View Student Response", command = self.show_response)
+        m.add_command(label ="View Questionaire", command = self.show_questions)
+        self.m = m
+        m.add_command(label ="Cancel", command = m.pack_forget)
+        m.tk_popup(event.x_root, event.y_root)
+
 
     # closing window action
     def close_window(self):
