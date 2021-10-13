@@ -7,8 +7,7 @@ import threading
 from queue import Queue
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
-from tkinter import Frame, Pack, filedialog,messagebox,ttk
-
+from tkinter import Frame, Pack, filedialog, messagebox,ttk
 
 
 # event handler for watchdog which will notify whenever change in directory is noticed 
@@ -19,6 +18,7 @@ class Event(LoggingEventHandler):
         if (self.count == 2):
             app.table()
             self.count = 0
+            app.inser_text_in_ter("{ DB_UPDATE_DETECTED } Console has been updated automatically..")
 
 
 # Tkinter App implementation OO
@@ -27,7 +27,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('Server Side')
-        self.geometry("1100x590")
+        self.geometry("1100x600")
         self.pack_propagate(False)
         self.resizable(0, 0)
         
@@ -38,11 +38,20 @@ class App(tk.Tk):
         #protocol whnever close button in pressed
         self.protocol("WM_DELETE_WINDOW", self.close_window)
     
+
     def main_window(self):
-        label = Label(self, text="Welcome!! Host Your Own Exam :)", font=('Helvetica bold', 16))
-        label.pack()
+        label1 = Label(self, text="Welcome!! Host Your Own Exam :)", font=('Helvetica bold', 14))
+        label1.pack()
+        
+        frame0 = tk.LabelFrame(self, text="Tip")
+        frame0.place(height=50, width=1050,rely=0.04,relx=0.02)
+        label2 = Label(frame0, bg='#FFFFFF', text="Double Click On A Selected Row To View Student's Credentials OR Student's Response To Questions In Provided Questionaire.", font=('Helvetica bold', 10))
+        label2.place(height=20, width=950, rely=0.04,relx=0.04)
+
         self.table()
+        self.terminal()
     
+
     # heading setup for each column
     def header_setup(self):
         filename3 = "CSV_Files/progress.csv"
@@ -50,19 +59,22 @@ class App(tk.Tk):
             csvreader = csv.reader(csvfile)
             self.RR_fields = next(csvreader)
     
+
     # whole table setup
     def table(self):
         #frame for tree view
         frame1 = tk.LabelFrame(self, text="Student Data")
-        frame1.place(height=390, width=1050,rely=0.1,relx=0.02)
+        frame1.place(height=390, width=1050,rely=0.13,relx=0.02)
         
         treescrolly = tk.Scrollbar(frame1, orient="vertical")
         treescrolly.pack(side="right", fill="y")
         #tree view
-        tree = ttk.Treeview(frame1, column=("c1", "c2", "c3", "c4", "c5"), show='headings', height=17, yscrollcommand = treescrolly.set)
+        tree = ttk.Treeview(frame1, column=("c1", "c2", "c3", "c4"), show='headings', height=17, yscrollcommand = treescrolly.set)
         treescrolly.config(command = tree.yview)
 
-        headings = ['Registration ID', 'Exam Started','Exam Finished','Questions Status','Total Score']
+        self.tree = tree
+
+        headings = ['Registration ID', 'Exam Started','Exam Finished','Total Score']
         for i in range(len(headings)):
             tree.column(f"# {i + 1}", anchor=CENTER)
             tree.heading(f"# {i + 1}", text=headings[i])
@@ -70,25 +82,102 @@ class App(tk.Tk):
         RR_fields = ['started','finished','Q1','Q2','Q3','Q4','Q5','score']
         cnt = 1
         for i in RR:
-            tree.insert('', 'end', text=cnt, values=(i, RR[i]['started'], RR[i]['finished'], "Click Me !!", RR[i]['score']))
+            tree.insert('', 'end', text=cnt, values=(i, RR[i]['started'], RR[i]['finished'], RR[i]['score']))
             cnt += 1
+            tree.bind('<Double-1>', self.selectItem)
+        #tree.selection_set(0)
         tree.pack()
-    
+
+
+    def terminal(self):
+        frame3 = tk.LabelFrame(self, text="Status Terminal")
+        frame3.place(height=110, width=640,rely=0.79,relx=0.3925)
+
+        scrollbar = Scrollbar(frame3)
+        scrollbar.pack( side = RIGHT, fill = Y)
+        self.mylist = Listbox(frame3, yscrollcommand = scrollbar.set, bg = "#000000", fg = "#FFFFFF", font=("Terminal", 10))
+        #mylist.insert(END, "This is line number " + str(line))
+        self.inser_text_in_ter("Press 'Start Server' in control panel to launch your test.")
+        self.mylist.place(height=85, width=610,rely=0,relx=0.01)
+        scrollbar.config( command = self.mylist.yview)
+
+
+    def inser_text_in_ter(self, tx):
+        self.mylist.delete(END)
+        self.mylist.insert(END, " > " + tx)
+        self.mylist.insert(END, " > ")
+        self.mylist.yview_moveto('1.0')
+
+
+    def start_server_bt(self):
+        self.start_server_button1.config(state = DISABLED)
+        self.inser_text_in_ter("Initialized required CSV files..")
+        time.sleep(0.5)
+        thread_initializer()
+        self.table()
+        self.inser_text_in_ter('Server has been Started..')
+
+
     def control_panel(self):
         #frame for update button
         file_frame = tk.LabelFrame(self, text="Control Panel")
-        file_frame.place(height=100, width=1050,rely=0.78,relx=0.02)
+        file_frame.place(height=110, width=400,rely=0.79,relx=0.02)
+        canvas=Canvas(file_frame,bg='#FFFFFF',width=380,height=80).pack()
+        
         #buttons
-        button1 = tk.Button(file_frame,text="Manual Update", command=self.table)
-        button1.place(rely=0.4, relx=0.3)
-        button1 = tk.Button(file_frame,text="Start Server")
-        button1.place(rely=0.4, relx=0.45)
-        button1 = tk.Button(file_frame,text="Close Server")
-        button1.place(rely=0.4, relx=0.58)
+        button1 = tk.Button(file_frame,text="Manual Update", command=lambda: [self.table(), self.inser_text_in_ter('Console has been updated manually..')])
+        button1.place(rely=0.32, relx=0.045)
+        self.start_server_button1 = tk.Button(file_frame,text="Start Server", command=lambda: [self.start_server_bt()])
+        self.start_server_button1.place(rely=0.32, relx=0.4025)
+        button2 = tk.Button(file_frame,text="About Us !!")
+        button2.place(rely=0.32, relx=0.7)
+
+
+    def show_details(self):
+        top= Toplevel(self)
+        top.geometry("750x300")
+        top.title("Student Credentials Window")
+        Label(top, text= self.curItem['values'][0], font=('Helvetica bold', 16)).pack()
+
+
+    def show_response(self):
+        top= Toplevel(self)
+        top.geometry("750x300")
+        top.title("Student Response Window")
+        Label(top, text= self.curItem['values'][0], font=('Helvetica bold', 16)).pack()
+
+
+    def show_questions(self):
+        top= Toplevel(self)
+        top.geometry("750x300")
+        top.title("Questionaire Window")
+        Label(top, text= self.curItem['values'][0], font=('Helvetica bold', 16)).pack()
+
+
+    def selectItem(self, event):
+        self.curItem = self.tree.item(self.tree.focus())
+        self.col = self.tree.identify_column(event.x)
+        m = Menu(self, tearoff = 0)
+        m.add_command(label ="View Student Credentials", command = self.show_details)
+        m.add_command(label ="View Student Response", command = self.show_response)
+        m.add_command(label ="View Questionaire", command = self.show_questions)
+        self.m = m
+        m.add_command(label ="Cancel", command = m.pack_forget)
+        m.tk_popup(event.x_root, event.y_root)
+
+
+    def ask_to_quit(self):
+        res = messagebox.askquestion('Exit Confirmation', 'Are you sure you want to close the server and exit ?')
+        if res == 'yes':
+            self.destroy()
+            os._exit(0)
+        else:
+            pass
+
 
     # closing window action
     def close_window(self):
-        self.destroy()
+        self.ask_to_quit()
 
 
 # CSV initialization
@@ -151,7 +240,8 @@ def threaded_client(conn, reg_no):
                 result = 'Wrong Answer'
                 conn.send(result.encode())
             update_csv()
-        RR[reg_no]['finished'] == 'true'    
+        RR[reg_no]['finished'] == 'true'   
+        app.inser_text_in_ter(f'Registration Number - {reg_no} has finished the test.') 
         conn.close()# close the connection
     except:
         return
@@ -192,10 +282,10 @@ def start_server(server_socket):
             else:
                 RR[reg_no]['started'] = 'true'
                 #q.put((reg_no, 'started'))
-                update_csv()
                 allowed = "ALLOWED"
                 conn.send(allowed.encode())
-                print(f'Registration Number - {reg_no} has started the test.')
+                app.inser_text_in_ter(f'Registration Number - {reg_no} has started the test.')
+                update_csv()
         else:
             not_allowed = "NOT ALLOWED"
             conn.send(not_allowed.encode())
@@ -207,6 +297,12 @@ def t0(q):
     setting_up_csv()
     server_socket = setting_up_server()
     start_server(server_socket)
+
+
+def thread_initializer():
+    # starting of thread
+    thread_0.start()
+    thread_1.start()
 
 
 def t1(q):
@@ -233,6 +329,9 @@ if __name__ == '__main__':
     PP = dict()
     RR = {}
 
+    global STOP 
+    STOP = False
+
     _sentinel = object()
 
     q = Queue()
@@ -240,9 +339,6 @@ if __name__ == '__main__':
     # threads announcement
     thread_0 = threading.Thread(target=t0, args=(q,))
     thread_1 = threading.Thread(target=t1, args=(q,))
-    # starting of thread
-    thread_0.start()
-    thread_1.start()
     # starting tkinter app
     app = App()
     app.header_setup()
