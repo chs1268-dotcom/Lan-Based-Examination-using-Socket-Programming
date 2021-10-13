@@ -7,7 +7,7 @@ import threading
 from queue import Queue
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
-from tkinter import Frame, Pack, filedialog,messagebox,ttk
+from tkinter import Frame, Pack, filedialog, messagebox,ttk
 
 
 # event handler for watchdog which will notify whenever change in directory is noticed 
@@ -18,6 +18,7 @@ class Event(LoggingEventHandler):
         if (self.count == 2):
             app.table()
             self.count = 0
+            app.inser_text_in_ter("{ DB_UPDATE_DETECTED } Console has been updated automatically..")
 
 
 # Tkinter App implementation OO
@@ -44,8 +45,8 @@ class App(tk.Tk):
         
         frame0 = tk.LabelFrame(self, text="Tip")
         frame0.place(height=50, width=1050,rely=0.04,relx=0.02)
-        label2 = Label(frame0, bg='#FFFFFF', text="Double Click On A Selected Row To View Student's Credentials, Student's Response To Questions In Provided Questionaire.", font=('Helvetica bold', 10))
-        label2.place(height=20, width=1000, rely=0.04,relx=0.02)
+        label2 = Label(frame0, bg='#FFFFFF', text="Double Click On A Selected Row To View Student's Credentials OR Student's Response To Questions In Provided Questionaire.", font=('Helvetica bold', 10))
+        label2.place(height=20, width=950, rely=0.04,relx=0.04)
 
         self.table()
         self.terminal()
@@ -90,33 +91,46 @@ class App(tk.Tk):
 
     def terminal(self):
         frame3 = tk.LabelFrame(self, text="Status Terminal")
-        frame3.place(height=110, width=540,rely=0.79,relx=0.4845)
+        frame3.place(height=110, width=640,rely=0.79,relx=0.3925)
 
         scrollbar = Scrollbar(frame3)
         scrollbar.pack( side = RIGHT, fill = Y)
         self.mylist = Listbox(frame3, yscrollcommand = scrollbar.set, bg = "#000000", fg = "#FFFFFF", font=("Terminal", 10))
         #mylist.insert(END, "This is line number " + str(line))
-        self.mylist.place(height=85, width=510,rely=0,relx=0.01)
+        self.inser_text_in_ter("Press 'Start Server' in control panel to launch your test.")
+        self.mylist.place(height=85, width=610,rely=0,relx=0.01)
         scrollbar.config( command = self.mylist.yview)
 
 
-    def disble_bt(self):
-        self.start_server_button1.config(state = DISABLED)
+    def inser_text_in_ter(self, tx):
+        self.mylist.delete(END)
+        self.mylist.insert(END, " > " + tx)
+        self.mylist.insert(END, " > ")
+        self.mylist.yview_moveto('1.0')
 
-    
+
+    def start_server_bt(self):
+        self.start_server_button1.config(state = DISABLED)
+        self.inser_text_in_ter("Initialized required CSV files..")
+        time.sleep(0.5)
+        thread_initializer()
+        self.table()
+        self.inser_text_in_ter('Server has been Started..')
+
+
     def control_panel(self):
         #frame for update button
         file_frame = tk.LabelFrame(self, text="Control Panel")
-        file_frame.place(height=110, width=500,rely=0.79,relx=0.02)
-        canvas=Canvas(file_frame,bg='#FFFFFF',width=480,height=80).pack()
+        file_frame.place(height=110, width=400,rely=0.79,relx=0.02)
+        canvas=Canvas(file_frame,bg='#FFFFFF',width=380,height=80).pack()
         
         #buttons
-        button1 = tk.Button(file_frame,text="Manual Update", command=self.table)
-        button1.place(rely=0.32, relx=0.1)
-        self.start_server_button1 = tk.Button(file_frame,text="Start Server", command=lambda: [self.disble_bt(), thread_initializer(), self.table()])
-        self.start_server_button1.place(rely=0.32, relx=0.4)
-        button2 = tk.Button(file_frame,text="More About Us")
-        button2.place(rely=0.32, relx=0.65)
+        button1 = tk.Button(file_frame,text="Manual Update", command=lambda: [self.table(), self.inser_text_in_ter('Console has been updated manually..')])
+        button1.place(rely=0.32, relx=0.045)
+        self.start_server_button1 = tk.Button(file_frame,text="Start Server", command=lambda: [self.start_server_bt()])
+        self.start_server_button1.place(rely=0.32, relx=0.4025)
+        button2 = tk.Button(file_frame,text="About Us !!")
+        button2.place(rely=0.32, relx=0.7)
 
 
     def show_details(self):
@@ -226,7 +240,8 @@ def threaded_client(conn, reg_no):
                 result = 'Wrong Answer'
                 conn.send(result.encode())
             update_csv()
-        RR[reg_no]['finished'] == 'true'    
+        RR[reg_no]['finished'] == 'true'   
+        app.inser_text_in_ter(f'Registration Number - {reg_no} has finished the test.') 
         conn.close()# close the connection
     except:
         return
@@ -267,10 +282,10 @@ def start_server(server_socket):
             else:
                 RR[reg_no]['started'] = 'true'
                 #q.put((reg_no, 'started'))
-                update_csv()
                 allowed = "ALLOWED"
                 conn.send(allowed.encode())
-                print(f'Registration Number - {reg_no} has started the test.')
+                app.inser_text_in_ter(f'Registration Number - {reg_no} has started the test.')
+                update_csv()
         else:
             not_allowed = "NOT ALLOWED"
             conn.send(not_allowed.encode())
