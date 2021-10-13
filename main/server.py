@@ -10,7 +10,6 @@ from watchdog.events import LoggingEventHandler
 from tkinter import Frame, Pack, filedialog,messagebox,ttk
 
 
-
 # event handler for watchdog which will notify whenever change in directory is noticed 
 class Event(LoggingEventHandler):
     count = 0
@@ -38,17 +37,20 @@ class App(tk.Tk):
         #protocol whnever close button in pressed
         self.protocol("WM_DELETE_WINDOW", self.close_window)
     
+
     def main_window(self):
         label1 = Label(self, text="Welcome!! Host Your Own Exam :)", font=('Helvetica bold', 14))
         label1.pack()
         
         frame0 = tk.LabelFrame(self, text="Tip")
         frame0.place(height=50, width=1050,rely=0.04,relx=0.02)
-        label2 = Label(frame0, text="Double Click On A Selected Row To View Student's Credentials, Student's Response To Questions In Provided Questionaire.", font=('Helvetica bold', 10))
-        label2.pack()
+        label2 = Label(frame0, bg='#FFFFFF', text="Double Click On A Selected Row To View Student's Credentials, Student's Response To Questions In Provided Questionaire.", font=('Helvetica bold', 10))
+        label2.place(height=20, width=1000, rely=0.04,relx=0.02)
 
         self.table()
+        self.terminal()
     
+
     # heading setup for each column
     def header_setup(self):
         filename3 = "CSV_Files/progress.csv"
@@ -56,6 +58,7 @@ class App(tk.Tk):
             csvreader = csv.reader(csvfile)
             self.RR_fields = next(csvreader)
     
+
     # whole table setup
     def table(self):
         #frame for tree view
@@ -84,18 +87,37 @@ class App(tk.Tk):
         #tree.selection_set(0)
         tree.pack()
 
+
+    def terminal(self):
+        frame3 = tk.LabelFrame(self, text="Status Terminal")
+        frame3.place(height=110, width=540,rely=0.79,relx=0.4845)
+
+        scrollbar = Scrollbar(frame3)
+        scrollbar.pack( side = RIGHT, fill = Y)
+        self.mylist = Listbox(frame3, yscrollcommand = scrollbar.set, bg = "#000000", fg = "#FFFFFF", font=("Terminal", 10))
+        #mylist.insert(END, "This is line number " + str(line))
+        self.mylist.place(height=85, width=510,rely=0,relx=0.01)
+        scrollbar.config( command = self.mylist.yview)
+
+
+    def disble_bt(self):
+        self.start_server_button1.config(state = DISABLED)
+
     
     def control_panel(self):
         #frame for update button
         file_frame = tk.LabelFrame(self, text="Control Panel")
-        file_frame.place(height=100, width=1050,rely=0.79,relx=0.02)
+        file_frame.place(height=110, width=500,rely=0.79,relx=0.02)
+        canvas=Canvas(file_frame,bg='#FFFFFF',width=480,height=80).pack()
+        
         #buttons
         button1 = tk.Button(file_frame,text="Manual Update", command=self.table)
-        button1.place(rely=0.4, relx=0.3)
-        button1 = tk.Button(file_frame,text="Start Server")
-        button1.place(rely=0.4, relx=0.45)
-        button1 = tk.Button(file_frame,text="Close Server")
-        button1.place(rely=0.4, relx=0.58)
+        button1.place(rely=0.32, relx=0.1)
+        self.start_server_button1 = tk.Button(file_frame,text="Start Server", command=lambda: [self.disble_bt(), thread_initializer(), self.table()])
+        self.start_server_button1.place(rely=0.32, relx=0.4)
+        button2 = tk.Button(file_frame,text="More About Us")
+        button2.place(rely=0.32, relx=0.65)
+
 
     def show_details(self):
         top= Toplevel(self)
@@ -130,9 +152,18 @@ class App(tk.Tk):
         m.tk_popup(event.x_root, event.y_root)
 
 
+    def ask_to_quit(self):
+        res = messagebox.askquestion('Exit Confirmation', 'Are you sure you want to close the server and exit ?')
+        if res == 'yes':
+            self.destroy()
+            os._exit(0)
+        else:
+            pass
+
+
     # closing window action
     def close_window(self):
-        self.destroy()
+        self.ask_to_quit()
 
 
 # CSV initialization
@@ -253,6 +284,12 @@ def t0(q):
     start_server(server_socket)
 
 
+def thread_initializer():
+    # starting of thread
+    thread_0.start()
+    thread_1.start()
+
+
 def t1(q):
     path = 'CSV_Files/progress.csv'
     # Initialize logging event handler
@@ -277,6 +314,9 @@ if __name__ == '__main__':
     PP = dict()
     RR = {}
 
+    global STOP 
+    STOP = False
+
     _sentinel = object()
 
     q = Queue()
@@ -284,9 +324,6 @@ if __name__ == '__main__':
     # threads announcement
     thread_0 = threading.Thread(target=t0, args=(q,))
     thread_1 = threading.Thread(target=t1, args=(q,))
-    # starting of thread
-    thread_0.start()
-    thread_1.start()
     # starting tkinter app
     app = App()
     app.header_setup()
