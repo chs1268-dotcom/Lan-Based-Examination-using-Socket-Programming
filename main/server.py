@@ -42,12 +42,12 @@ class App(tk.Tk):
 
     def main_window(self):
         label1 = Label(self, text="Welcome!! Host Your Own Exam :)", font=('Helvetica bold', 14))
-        label1.pack()
+        label1.place(height=20, width=1050,rely=0.01,relx=0.01)
         
         frame0 = tk.LabelFrame(self, text="Tip")
         frame0.place(height=50, width=1050,rely=0.04,relx=0.02)
         label2 = Label(frame0, bg='#FFFFFF', text="Double Click On A Selected Row To View Student's Credentials OR Student's Response To Questions In Provided Questionaire.", font=('Helvetica bold', 10))
-        label2.place(height=20, width=950, rely=0.04,relx=0.04)
+        label2.place(height=20, width=850, rely=0.04,relx=0.1)
 
         self.table()
         self.terminal()
@@ -70,20 +70,19 @@ class App(tk.Tk):
         treescrolly = tk.Scrollbar(frame1, orient="vertical")
         treescrolly.pack(side="right", fill="y")
         #tree view
-        tree = ttk.Treeview(frame1, column=("c1", "c2", "c3", "c4"), show='headings', height=17, yscrollcommand = treescrolly.set)
+        tree = ttk.Treeview(frame1, column=("c1", "c2", "c3", "c4", "c5"), show='headings', height=17, yscrollcommand = treescrolly.set)
         treescrolly.config(command = tree.yview)
 
         self.tree = tree
 
-        headings = ['Registration ID', 'Exam Started','Exam Finished','Total Score']
+        headings = ['Registration ID', 'Exam Started','Exam Finished','Correct Answers', 'Incorrect Answers']
         for i in range(len(headings)):
             tree.column(f"# {i + 1}", anchor=CENTER)
             tree.heading(f"# {i + 1}", text=headings[i])
             
-        RR_fields = ['started','finished','Q1','Q2','Q3','Q4','Q5','score']
         cnt = 1
         for i in RR:
-            tree.insert('', 'end', text=cnt, values=(i, RR[i]['started'], RR[i]['finished'], RR[i]['score']))
+            tree.insert('', 'end', text=cnt, values=(i, RR[i]['started'], RR[i]['finished'], RR[i]['correct'], RR[i]['wrong']))
             cnt += 1
             tree.bind('<Double-1>', self.selectItem)
         #tree.selection_set(0)
@@ -140,6 +139,8 @@ class App(tk.Tk):
         top.title("Student Credentials Window")
         top.geometry("680x270")
 
+        top.resizable(0, 0)
+
         frame0 = tk.LabelFrame(top, text="Student Profile Image")
         frame0.place(height=220, width=230,rely=0.1,relx=0.05)
         # Read the Image
@@ -180,9 +181,30 @@ class App(tk.Tk):
     def show_response(self):
         self.inser_text_in_ter("Response shown for " + self.curItem['values'][0])
         top= Toplevel(self)
-        top.geometry("750x300")
+        top.geometry("1300x230")
         top.title("Student Response Window")
-        Label(top, text= self.curItem['values'][0], font=('Helvetica bold', 16)).pack()
+        top.resizable(0, 0)
+
+        # Label(top, text= self.curItem['values'][0], font=('Helvetica bold', 16)).pack()
+
+        tree = ttk.Treeview(top, column=("c1", "c2", "c3", "c4"), show='headings', height=10)
+        tree.column("c1",width=70,anchor=CENTER)
+        tree.column("c2",anchor=W,width=700)
+        tree.column("c3",anchor=W,width=200)
+        tree.column("c4",anchor=W,width=300)
+        tree.heading("c1",text="Q.no",anchor=CENTER)
+        tree.heading("c2",text="Question",anchor=CENTER)
+        tree.heading("c3",text="Answer",anchor=CENTER)
+        tree.heading("c4",text=self.curItem['values'][0] + " Response", anchor=CENTER)
+        cnt = 1
+        filename = "CSV_Files/questionaire.csv"
+        csvreader = list(csv.DictReader(open(filename)))
+        dic = {1 : 'Q1', 2 : 'Q2', 3 : 'Q3', 4 : 'Q4', 5 : 'Q5', 6 : 'Q6', 7 : 'Q7', 8 : 'Q8', 9 : 'Q9', 10 : 'Q10'}
+        for i in range(len(csvreader)):
+            tree.insert('', 'end', text=cnt, values=(csvreader[i]['Question_ID'], csvreader[i]['Question'], csvreader[i]['Answer'], RR[self.curItem['values'][0]][dic[int(csvreader[i]['Question_ID'])]]))
+            cnt += 1
+
+        tree.pack()
 
 
     def show_questions(self):
@@ -249,7 +271,7 @@ def setting_up_csv():
             PP[row[0]] = str(row[1])
     csvreader3 = csv.DictReader(open(filename3))
     for row in csvreader3:
-        RR[row['id']] = {'started' : row['started'], 'finished' : row['finished'], 'Q1' : row['Q1'], 'Q2' : row['Q2'], 'Q3' : row['Q3'], 'Q4' : row['Q4'], 'Q5' : row['Q5'], 'score' : row['score']}
+        RR[row['id']] = {'started' : row['started'], 'finished' : row['finished'], 'Q1' : row['Q1'], 'Q2' : row['Q2'], 'Q3' : row['Q3'], 'Q4' : row['Q4'], 'Q5' : row['Q5'], 'Q6' : row['Q6'], 'Q7' : row['Q7'], 'Q8' : row['Q8'], 'Q9' : row['Q9'], 'Q10' : row['Q10'], 'correct' : row['correct'], 'wrong' : row['wrong']}
 
 
 # update CSV whenever a change is applied on server side from client
@@ -263,7 +285,7 @@ def update_csv():
         writer.writeheader()
         tmpdic = []
         for i in RR:
-            tmpdic.append({'id' : i, 'started' : RR[i]['started'], 'finished' : RR[i]['finished'], 'Q1' : RR[i]['Q1'], 'Q2' : RR[i]['Q2'], 'Q3' : RR[i]['Q3'], 'Q4' : RR[i]['Q4'], 'Q5' : RR[i]['Q5'], 'score' : RR[i]['score']})
+            tmpdic.append({'id' : i, 'started' : RR[i]['started'], 'finished' : RR[i]['finished'], 'Q1' : RR[i]['Q1'], 'Q2' : RR[i]['Q2'], 'Q3' : RR[i]['Q3'], 'Q4' : RR[i]['Q4'], 'Q5' : RR[i]['Q5'], 'Q6' : RR[i]['Q6'], 'Q7' : RR[i]['Q7'], 'Q8' : RR[i]['Q8'], 'Q9' : RR[i]['Q9'], 'Q10' : RR[i]['Q10'], 'correct' : RR[i]['correct'], 'wrong' : RR[i]['wrong']})
         writer.writerows(tmpdic)
     
 
@@ -283,16 +305,17 @@ def threaded_client(conn, reg_no):
             conn.send(QQ[i]['Option4'].encode())
 
             ans = conn.recv(1024).decode()
-            dic = {1 : 'Q1', 2 : 'Q2', 3 : 'Q3', 4 : 'Q4', 5 : 'Q5'}
-            RR[reg_no][dic[i + 1]] = 'true'
+            dic = {1 : 'Q1', 2 : 'Q2', 3 : 'Q3', 4 : 'Q4', 5 : 'Q5', 6 : 'Q6', 7 : 'Q7', 8 : 'Q8', 9 : 'Q9', 10 : 'Q10'}
+            RR[reg_no][dic[i + 1]] = QQ[i][ans]
             # receive data stream. it won't accept data packet greater than 1024 bytes
             if QQ[i][ans] ==QQ[i]['Answer']:
                 result = 'Right answer'
                 conn.send(result.encode())
-                RR[reg_no]['score'] = str(int(RR[reg_no]['score']) + 1)
+                RR[reg_no]['correct'] = str(int(RR[reg_no]['correct']) + 1)
             else:
                 result = 'Wrong Answer'
                 conn.send(result.encode())
+                RR[reg_no]['wrong'] = str(int(RR[reg_no]['wrong']) + 1)
             update_csv()
         RR[reg_no]['finished'] == 'true'   
         app.inser_text_in_ter(f'Registration Number - {reg_no} has finished the test.') 
