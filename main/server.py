@@ -118,6 +118,37 @@ class App(tk.Tk):
         self.inser_text_in_ter('Server has been Started..')
 
 
+    def about_us_window(self):
+        top= Toplevel(self)
+        top.title("About Us")
+        top.geometry("680x270")
+        top.resizable(0, 0)
+
+        l0 = Label(top, text= '[ Lan Based Examination Using Socket Programming ]', font=('Helvetica bold', 16))
+        l0.pack()
+
+        l1 = Label(top, text= '', font=('Helvetica bold', 16))
+        l1.pack()
+
+        label1 = Label(top, text= '-: Created By :-', font=('Helvetica bold', 11))
+        label1.pack()
+        label2 = Label(top, text= 'Abhinav Sharma (RA1911003010726)', font=('Helvetica bold', 14))
+        label2.pack()
+        label3 = Label(top, text= 'Chigilipalli Sriharsha (RA1911003010723)', font=('Helvetica bold', 14))
+        label3.pack()
+        label4 = Label(top, text= 'Sai Kiran Reddy (RA1911003010721)', font=('Helvetica bold', 14))
+        label4.pack()
+
+        l1 = Label(top, text= '', font=('Helvetica bold', 16))
+        l1.pack()
+        label1 = Label(top, text= '-: Institute Name :-', font=('Helvetica bold', 11))
+        label1.pack()
+        l0 = Label(top, text= 'SRM Institute Of Science And Technology, Ktr Chennai', font=('Helvetica bold', 16))
+        l0.pack()
+
+        top.mainloop()
+
+
     def control_panel(self):
         #frame for update button
         file_frame = tk.LabelFrame(self, text="Control Panel")
@@ -129,7 +160,7 @@ class App(tk.Tk):
         button1.place(rely=0.32, relx=0.045)
         self.start_server_button1 = tk.Button(file_frame,text="Start Server", command=lambda: [self.start_server_bt()])
         self.start_server_button1.place(rely=0.32, relx=0.4025)
-        button2 = tk.Button(file_frame,text="About Us !!")
+        button2 = tk.Button(file_frame,text="About Us !!", command=self.about_us_window)
         button2.place(rely=0.32, relx=0.7)
 
 
