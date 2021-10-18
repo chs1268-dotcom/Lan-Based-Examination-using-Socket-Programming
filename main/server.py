@@ -8,6 +8,7 @@ from queue import Queue
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 from tkinter import Frame, Pack, filedialog, messagebox,ttk
+from PIL import Image, ImageTk
 
 
 # event handler for watchdog which will notify whenever change in directory is noticed 
@@ -134,13 +135,50 @@ class App(tk.Tk):
 
 
     def show_details(self):
+        self.inser_text_in_ter("Credentials shown for " + self.curItem['values'][0])
         top= Toplevel(self)
-        top.geometry("750x300")
         top.title("Student Credentials Window")
-        Label(top, text= self.curItem['values'][0], font=('Helvetica bold', 16)).pack()
+        top.geometry("680x270")
+
+        frame0 = tk.LabelFrame(top, text="Student Profile Image")
+        frame0.place(height=220, width=230,rely=0.1,relx=0.05)
+        # Read the Image
+        image = Image.open("images/profile.jpeg")
+        # Resize the image using resize() method
+        resize_image = image.resize((200, 180))
+        img = ImageTk.PhotoImage(resize_image)
+        # create label and add resize image
+        label1 = Label(frame0, image=img)
+        label1.image = img
+        label1.place(height=180, width=200,rely=0.05,relx=0.05)
+
+
+        frame1 = tk.LabelFrame(top, text="Student Details")
+        frame1.place(height=130, width=380, rely=0.1, relx=0.4)
+
+        label2 = Label(frame1, text= 'Registration Number :- ' + self.curItem['values'][0], font=('Helvetica bold', 11))
+        label2.place(rely=0.1,relx=0.05)
+        label3 = Label(frame1, text= 'Name :- Not Availaible', font=('Helvetica bold', 11))
+        label3.place(rely=0.28,relx=0.05)
+        label4 = Label(frame1, text= 'Specialization :- Not Availaible', font=('Helvetica bold', 11))
+        label4.place(rely=0.48,relx=0.05)
+        label5 = Label(frame1, text= 'Batch :- Not Availaible', font=('Helvetica bold', 11))
+        label5.place(rely=0.68,relx=0.05)
+
+
+        frame2 = tk.LabelFrame(top, text="Student Credentials")
+        frame2.place(height=85, width=380, rely=0.6, relx=0.4)
+
+        label6 = Label(frame2, text= 'Login Id :- ' + self.curItem['values'][0], font=('Helvetica bold', 11))
+        label6.place(rely=0.1,relx=0.05)
+        label7 = Label(frame2, text= 'Login Password :- ' + PP[self.curItem['values'][0]] + " ", font=('Helvetica bold', 11))
+        label7.place(rely=0.45,relx=0.05)
+        # Execute Tkinter
+        top.mainloop()
 
 
     def show_response(self):
+        self.inser_text_in_ter("Response shown for " + self.curItem['values'][0])
         top= Toplevel(self)
         top.geometry("750x300")
         top.title("Student Response Window")
@@ -149,18 +187,34 @@ class App(tk.Tk):
 
     def show_questions(self):
         top= Toplevel(self)
-        top.geometry("750x300")
+        top.geometry("1000x230")
+        top.resizable(0,0)
         top.title("Questionaire Window")
-        Label(top, text= self.curItem['values'][0], font=('Helvetica bold', 16)).pack()
+        tree = ttk.Treeview(top, column=("c1", "c2", "c3"), show='headings', height=10)
+        tree.column("c1",width=70,anchor=CENTER)
+        tree.column("c2",anchor=W,width=700)
+        tree.column("c3",anchor=W,width=200)
+        tree.heading("c1",text="Q.no",anchor=CENTER)
+        tree.heading("c2",text="Question",anchor=CENTER)
+        tree.heading("c3",text="Answer",anchor=CENTER)
+        cnt = 1
+        filename = "CSV_Files/questionaire.csv"
+        csvreader = list(csv.DictReader(open(filename)))
+        for i in range(len(csvreader)):
+            tree.insert('', 'end', text=cnt, values=(csvreader[i]['Question_ID'], csvreader[i]['Question'], csvreader[i]['Answer']))
+            cnt += 1
+
+        tree.pack()
 
 
     def selectItem(self, event):
         self.curItem = self.tree.item(self.tree.focus())
         self.col = self.tree.identify_column(event.x)
         m = Menu(self, tearoff = 0)
-        m.add_command(label ="View Student Credentials", command = self.show_details)
-        m.add_command(label ="View Student Response", command = self.show_response)
-        m.add_command(label ="View Questionaire", command = self.show_questions)
+        s = self.curItem['values'][0]
+        m.add_command(label ="View Student Credentials", command = lambda: [self.inser_text_in_ter("Credentials requested for " + self.curItem['values'][0] + " .."), self.show_details()])
+        m.add_command(label ="View Student Response", command = lambda: [self.inser_text_in_ter("Respone requested for " + self.curItem['values'][0] + " .."), self.show_response()])
+        m.add_command(label ="View Questionaire", command = lambda: [self.inser_text_in_ter("Questionaire requested .."), self.show_questions()])
         self.m = m
         m.add_command(label ="Cancel", command = m.pack_forget)
         m.tk_popup(event.x_root, event.y_root)
@@ -192,7 +246,7 @@ def setting_up_csv():
     with open(filename2, 'r') as csvfile:
         csvreader2 = csv.reader(csvfile)
         for row in csvreader2:
-            PP[row[0]] = row[1]
+            PP[row[0]] = str(row[1])
     csvreader3 = csv.DictReader(open(filename3))
     for row in csvreader3:
         RR[row['id']] = {'started' : row['started'], 'finished' : row['finished'], 'Q1' : row['Q1'], 'Q2' : row['Q2'], 'Q3' : row['Q3'], 'Q4' : row['Q4'], 'Q5' : row['Q5'], 'score' : row['score']}
