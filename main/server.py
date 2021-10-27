@@ -31,17 +31,13 @@ class App(tk.Tk):
         self.geometry("1100x600")
         self.pack_propagate(False)
         self.resizable(0, 0)
-        
-        # temporary refresh button
-        # b = Button(self, text='Refresh', command=self.table)
-        # b.grid(row = 0, column = 9)
 
         #protocol whnever close button in pressed
         self.protocol("WM_DELETE_WINDOW", self.close_window)
     
 
     def main_window(self):
-        label1 = Label(self, text="Welcome!! Host Your Own Exam :)", font=('Helvetica bold', 14))
+        label1 = Label(self, text="Welcome!! Host Your Own Exam :)", font=('Helvetica bold', 14, 'bold'))
         label1.place(height=20, width=1050,rely=0.01,relx=0.01)
         
         frame0 = tk.LabelFrame(self, text="Tip")
@@ -118,6 +114,37 @@ class App(tk.Tk):
         self.inser_text_in_ter('Server has been Started..')
 
 
+    def about_us_window(self):
+        top= Toplevel(self)
+        top.title("About Us")
+        top.geometry("680x270")
+        top.resizable(0, 0)
+
+        l0 = Label(top, text= '[ Lan Based Examination Using Socket Programming ]', font=('Helvetica bold', 16, 'bold'))
+        l0.pack()
+
+        l1 = Label(top, text= '', font=('Helvetica bold', 16))
+        l1.pack()
+
+        label1 = Label(top, text= '-: Created By :-', font=('Helvetica bold', 11))
+        label1.pack()
+        label2 = Label(top, text= 'Abhinav Sharma (RA1911003010726)', font=('Helvetica bold', 14))
+        label2.pack()
+        label3 = Label(top, text= 'Chigilipalli Sriharsha (RA1911003010723)', font=('Helvetica bold', 14))
+        label3.pack()
+        label4 = Label(top, text= 'Sai Kiran Reddy (RA1911003010721)', font=('Helvetica bold', 14))
+        label4.pack()
+
+        l1 = Label(top, text= '', font=('Helvetica bold', 16))
+        l1.pack()
+        label1 = Label(top, text= '-: Institute Name :-', font=('Helvetica bold', 11))
+        label1.pack()
+        l0 = Label(top, text= 'SRM Institute Of Science And Technology, Ktr. Chennai', font=('Helvetica bold', 16, 'bold'))
+        l0.pack()
+
+        top.mainloop()
+
+
     def control_panel(self):
         #frame for update button
         file_frame = tk.LabelFrame(self, text="Control Panel")
@@ -129,7 +156,7 @@ class App(tk.Tk):
         button1.place(rely=0.32, relx=0.045)
         self.start_server_button1 = tk.Button(file_frame,text="Start Server", command=lambda: [self.start_server_bt()])
         self.start_server_button1.place(rely=0.32, relx=0.4025)
-        button2 = tk.Button(file_frame,text="About Us !!")
+        button2 = tk.Button(file_frame,text="About Us !!", command=self.about_us_window)
         button2.place(rely=0.32, relx=0.7)
 
 
@@ -303,21 +330,29 @@ def threaded_client(conn, reg_no):
             conn.send(QQ[i]['Option3'].encode())
             time.sleep(0.1)
             conn.send(QQ[i]['Option4'].encode())
+            time.sleep(0.1)
 
-            ans = conn.recv(1024).decode()
-            dic = {1 : 'Q1', 2 : 'Q2', 3 : 'Q3', 4 : 'Q4', 5 : 'Q5', 6 : 'Q6', 7 : 'Q7', 8 : 'Q8', 9 : 'Q9', 10 : 'Q10'}
-            RR[reg_no][dic[i + 1]] = QQ[i][ans]
+        ans = conn.recv(1024).decode()
+        dic = {1 : 'Q1', 2 : 'Q2', 3 : 'Q3', 4 : 'Q4', 5 : 'Q5', 6 : 'Q6', 7 : 'Q7', 8 : 'Q8', 9 : 'Q9', 10 : 'Q10'}
+        ANS_DICT = {'A' : 'Option1', 'B' : 'Option2', 'C' : 'Option3', 'D' : 'Option4'}
+
+        for i in range(len(ans)):
+            current_ANS = ANS_DICT[ans[i]]
+            RR[reg_no][dic[i + 1]] = QQ[i][current_ANS]
             # receive data stream. it won't accept data packet greater than 1024 bytes
-            if QQ[i][ans] ==QQ[i]['Answer']:
-                result = 'Right answer'
-                conn.send(result.encode())
+            if QQ[i][current_ANS] ==QQ[i]['Answer']:
+                # result = 'Right answer'
+                # conn.send(result.encode())
                 RR[reg_no]['correct'] = str(int(RR[reg_no]['correct']) + 1)
             else:
-                result = 'Wrong Answer'
-                conn.send(result.encode())
+                # result = 'Wrong Answer'
+                # conn.send(result.encode())
                 RR[reg_no]['wrong'] = str(int(RR[reg_no]['wrong']) + 1)
-            update_csv()
-        RR[reg_no]['finished'] == 'true'   
+        
+        RR[reg_no]['finished'] = 'true' 
+        
+        update_csv()
+
         app.inser_text_in_ter(f'Registration Number - {reg_no} has finished the test.') 
         conn.close()# close the connection
     except:
@@ -353,8 +388,8 @@ def start_server(server_socket):
 
         if (reg_no in PP and PP[reg_no] == passw):
             if RR[reg_no]['started'] == 'true':
-                print('Already Started')
-                not_allowed = "NOT ALLOWED"
+                app.inser_text_in_ter(f'Registration Number - {reg_no} is trying to re-access the test.')
+                not_allowed = "ALREADY STARTED"
                 conn.send(not_allowed.encode())
             else:
                 RR[reg_no]['started'] = 'true'
