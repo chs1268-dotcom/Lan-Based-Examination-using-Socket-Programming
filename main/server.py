@@ -43,7 +43,7 @@ class App(tk.Tk):
         frame0 = tk.LabelFrame(self, text="Tip")
         frame0.place(height=50, width=1050,rely=0.04,relx=0.02)
         label2 = Label(frame0, bg='#FFFFFF', text="Double Click On A Selected Row To View Student's Credentials OR Student's Response To Questions In Provided Questionaire.", font=('Helvetica bold', 10))
-        label2.place(height=20, width=850, rely=0.04,relx=0.1)
+        label2.place(height=20, width=995, rely=0.04,relx=0.02)
 
         self.table()
         self.terminal()
@@ -277,7 +277,7 @@ class App(tk.Tk):
         else:
             pass
 
-
+ 
     # closing window action
     def close_window(self):
         self.ask_to_quit()
@@ -337,19 +337,23 @@ def threaded_client(conn, reg_no):
         ANS_DICT = {'A' : 'Option1', 'B' : 'Option2', 'C' : 'Option3', 'D' : 'Option4'}
 
         for i in range(len(ans)):
-            current_ANS = ANS_DICT[ans[i]]
-            RR[reg_no][dic[i + 1]] = QQ[i][current_ANS]
-            # receive data stream. it won't accept data packet greater than 1024 bytes
-            if QQ[i][current_ANS] ==QQ[i]['Answer']:
-                # result = 'Right answer'
-                # conn.send(result.encode())
-                RR[reg_no]['correct'] = str(int(RR[reg_no]['correct']) + 1)
-            else:
-                # result = 'Wrong Answer'
-                # conn.send(result.encode())
+            if ans[i] == '*':
+                RR[reg_no][dic[i + 1]] = "Not Attempted"
                 RR[reg_no]['wrong'] = str(int(RR[reg_no]['wrong']) + 1)
+            else:
+                current_ANS = ANS_DICT[ans[i]]
+                RR[reg_no][dic[i + 1]] = QQ[i][current_ANS]
+                # receive data stream. it won't accept data packet greater than 1024 bytes
+                if QQ[i][current_ANS] ==QQ[i]['Answer']:
+                    # result = 'Right answer'
+                    # conn.send(result.encode())
+                    RR[reg_no]['correct'] = str(int(RR[reg_no]['correct']) + 1)
+                else:
+                    # result = 'Wrong Answer'
+                    # conn.send(result.encode())
+                    RR[reg_no]['wrong'] = str(int(RR[reg_no]['wrong']) + 1)
         
-        RR[reg_no]['finished'] = 'true' 
+        RR[reg_no]['finished'] = 'true'
         
         update_csv()
 
