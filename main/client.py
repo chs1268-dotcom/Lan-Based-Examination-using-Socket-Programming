@@ -5,6 +5,8 @@ import tkinter as tk
 from tkinter import *
 import time, socket, sys, os
 from tkinter import Frame, Pack, filedialog, messagebox,ttk
+from PIL import Image, ImageTk
+
 
 
 class App(tk.Tk):
@@ -23,6 +25,7 @@ class App(tk.Tk):
 		self.protocol("WM_DELETE_WINDOW", self.close_window)
 		self.q = Queue()
 		self.questionaire = []
+		self.TEST_START = 'NO'
 		self.ANS_STR = {}
 		for i in range(1, 11):
 			self.ANS_STR[i] = StringVar("")
@@ -33,6 +36,14 @@ class App(tk.Tk):
 		label1.place(height=20, width=self.W,rely=0.02,relx=0.01)
 		frame0 = tk.LabelFrame(self, text="Instructions")
 		frame0.place(height=100, width=self.W - 50,rely=0.06,relx=0.02)
+		
+		label2 = Label(frame0, bg='#FFFFFF', text="1. Enter your Registration Number and Password provided by respective Course Faculty.											", font=('Helvetica bold', 10))
+		label2.place(height=20, width=self.W - 100, rely=0.05,relx=0.015)
+		label3 = Label(frame0, bg='#FFFFFF', text="2. Do not close window during test. This test is only One-Time Accessible.												", font=('Helvetica bold', 10))
+		label3.place(height=20, width=self.W - 100, rely=0.3,relx=0.015)
+		label4 = Label(frame0, bg='#FFFFFF', text="3. Review window is availaible at the end of the test. Submit Button will be enabled only when all questions are attempted.							", font=('Helvetica bold', 10))
+		label4.place(height=20, width=self.W - 100, rely=0.55,relx=0.015)
+
 		self.win1()
 
 
@@ -42,7 +53,7 @@ class App(tk.Tk):
 		password=self.passw_var.get()
 		self.name_var.set("")
 		self.passw_var.set("")
-		self.var1.set(0)
+		self.var1.set(1)
 
 		self.reply1 = name
 		self.reply2 = password
@@ -65,25 +76,33 @@ class App(tk.Tk):
 		frame0 = tk.LabelFrame(self.frame1, text="Fill Your LogIn Details Here")
 		frame0.place(height=320, width=self.W - 200, rely=0.05, relx=0.055)
 
+		image = Image.open("images/login_img.jpg")
+		resize_image = image.resize((300, 250))
+		img = ImageTk.PhotoImage(resize_image)
+		# create label and add resize image
+		label1 = Label(frame0, image=img)
+		label1.image = img
+		label1.place(height=250, width=300,rely=0.075,relx=0.05)
+
 		self.message_label = tk.Label(frame0, text = '', font=('Helvetica bold', 10)) 
-		self.message_label.place(rely=0.3,relx=0.4)
+		self.message_label.place(rely=0.1,relx=0.4)
 
 		name_label = tk.Label(frame0, text = 'Student Registration Number', font=('Helvetica bold', 11))  
-		name_label.place(rely=0.1,relx=0.1)
-		name_entry = tk.Entry(frame0, textvariable = self.name_var, font=('Helvetica bold', 11,'normal'), width=50)
-		name_entry.place(rely=0.1,relx=0.4)
+		name_label.place(rely=0.2,relx=0.4)
+		name_entry = tk.Entry(frame0, textvariable = self.name_var, font=('Helvetica bold', 11,'normal'), width=60)
+		name_entry.place(rely=0.3,relx=0.4)
 
 		passw_label = tk.Label(frame0, text = 'Password', font = ('Helvetica bold', 11))
-		passw_label.place(rely=0.2,relx=0.1)
-		passw_entry=tk.Entry(frame0, textvariable = self.passw_var, font = ('Helvetica bold', 11,'normal'), width=34)
-		passw_entry.place(rely=0.2,relx=0.4)
+		passw_label.place(rely=0.4,relx=0.4)
+		passw_entry=tk.Entry(frame0, textvariable = self.passw_var, font = ('Helvetica bold', 11,'normal'), width=60)
+		passw_entry.place(rely=0.5,relx=0.4)
 		self.show_hide(passw_entry)
 
 		c1 = tk.Checkbutton(frame0, text=' (Hide Password)',variable=self.var1, onvalue=1, offvalue=0, command= lambda: [self.show_hide(passw_entry)])
-		c1.place(rely=0.2,relx=0.67)
+		c1.place(rely=0.6,relx=0.4)
 
 		login_btn=tk.Button(frame0, text = 'Log In', command = self.submit)
-		login_btn.place(rely=0.4,relx=0.5)
+		login_btn.place(rely=0.7,relx=0.4)
 
 
 	def win1(self):
@@ -91,6 +110,15 @@ class App(tk.Tk):
 		self.frame1.place(height=400, width=self.W - 50,rely=0.21,relx=0.02)
 		frame2 = tk.LabelFrame(self, text="Useful Tips")
 		frame2.place(height=110, width=self.W - 50, rely=0.75, relx=0.02)
+
+		label2 = Label(frame2, bg='#FFFFFF', text="1. There are 10 Multiple Choice Questions in this test. All questions are compulsory	.										", font=('Helvetica bold', 10))
+		label2.place(height=20, width=self.W - 100, rely=0.05,relx=0.015)
+		label3 = Label(frame2, bg='#FFFFFF', text="2. This test is only One-Time Accessible. If you try to access the test again, concerned faculty will be alerted regarding the same.						", font=('Helvetica bold', 10))
+		label3.place(height=20, width=self.W - 100, rely=0.25,relx=0.015)
+		label4 = Label(frame2, bg='#FFFFFF', text="3. Review window is availaible at the end of the test. Submit Button will be enabled only when all questions are attempted.							", font=('Helvetica bold', 10))
+		label4.place(height=20, width=self.W - 100, rely=0.45,relx=0.015)
+		label5 = Label(frame2, bg='#FFFFFF', text="4. There are no partial marks and no negative marks.														", font=('Helvetica bold', 10))
+		label5.place(height=20, width=self.W - 100, rely=0.65,relx=0.015)
 
 		self.login_win()
 
@@ -120,8 +148,12 @@ class App(tk.Tk):
 	def send_it(self):
 		ANS_STR = ""
 		for i in range(1, 11):
-			ANS_STR += str(self.ANS_STR[i].get())
-		
+			s = self.ANS_STR[i].get()
+			if s == "":
+				ANS_STR += "*"
+			else:
+				ANS_STR += str(self.ANS_STR[i].get())
+
 		self.client_socket.send(ANS_STR.encode())
 		self.client_socket.close()  # close the connection
 
@@ -175,7 +207,9 @@ class App(tk.Tk):
 
 	def ask_to_quit(self):
 		res = messagebox.askquestion('Exit Confirmation', 'Are you sure you want to exit ?')
-		if res == 'yes':
+		if res == 'yes' and self.TEST_START == 'YES':
+			self.send_it()
+		elif res == 'yes' and self.TEST_START == 'NO':
 			self.destroy()
 			os._exit(0)
 		else:
@@ -210,6 +244,7 @@ class App(tk.Tk):
 			self.client_socket.close()
 			return
 
+		self.TEST_START = "YES"
 
 		for i in range(10):
 			dic = {}
