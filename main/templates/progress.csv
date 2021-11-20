@@ -1,0 +1,5 @@
+id,started,finished,Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10,correct,wrong
+<Enter ID here>,false,false,None,None,None,None,None,None,None,None,None,None,0,0
+<Enter ID as mentioned in id_passwords.csv>
+<Copy line 2 with different ids for multiple candidates>
+<Remove these 3 lines before starting>
